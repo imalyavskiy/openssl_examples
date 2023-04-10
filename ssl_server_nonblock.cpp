@@ -16,52 +16,49 @@ int main(int argc, char **argv)
 #endif
 
   char str[INET_ADDRSTRLEN];
-  int port = (argc>1)? atoi(argv[1]):55555;
+  const int port = (argc>1)? atoi(argv[1]):55555;
 
-  int servfd = socket(AF_INET, SOCK_STREAM, 0);
+  const int servfd = socket(AF_INET, SOCK_STREAM, 0);
   if (servfd < 0)
-    die("socket()");
+    Die("socket()");
 
-  int enable = 1;
+  const char enable = 1;
   if (setsockopt(servfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
-    die("setsockopt(SO_REUSEADDR)");
+    Die("setsockopt(SO_REUSEADDR)");
 
   /* Specify socket address */
-  struct sockaddr_in servaddr;
+  sockaddr_in servaddr = {0};
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servaddr.sin_port = htons(port);
 
   if (bind(servfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-    die("bind()");
+    Die("bind()");
 
   if (listen(servfd, 128) < 0)
-    die("listen()");
+    Die("listen()");
 
-  int clientfd;
-  struct sockaddr_in peeraddr;
-  socklen_t peeraddr_len = sizeof(peeraddr);
+  sockaddr_in peerAddr = { 0 };
+  socklen_t peerAddr_len = sizeof(peerAddr);
 
-  struct pollfd fdset[2];
-  memset(&fdset, 0, sizeof(fdset));
-
+  pollfd fdset[2] = { 0 };
   fdset[0].fd = STDIN_FILENO;
   fdset[0].events = POLLIN;
 
-  ssl_init("server.crt", "server.key"); // see README to create these files
+  SSLInit("server.crt", "server.key"); // see README to create these files
 
-  while (1) {
+  while (true) {
     printf("waiting for next connection on port %d\n", port);
 
-    clientfd = accept(servfd, (struct sockaddr *)&peeraddr, &peeraddr_len);
+    int clientfd = accept(servfd, reinterpret_cast<sockaddr*>(&peerAddr), &peerAddr_len);
     if (clientfd < 0)
-      die("accept()");
+      Die("accept()");
 
-    ssl_client_init(&client, clientfd, SSLMODE_SERVER);
+    SSLClientInit(&sslClient, clientfd, SSLMODE_SERVER);
 
-    inet_ntop(peeraddr.sin_family, &peeraddr.sin_addr, str, INET_ADDRSTRLEN);
-    printf("new connection from %s:%d\n", str, ntohs(peeraddr.sin_port));
+    inet_ntop(peerAddr.sin_family, &peerAddr.sin_addr, str, INET_ADDRSTRLEN);
+    printf("new connection from %s:%d\n", str, ntohs(peerAddr.sin_port));
 
     fdset[1].fd = clientfd;
 
@@ -72,36 +69,36 @@ int main(int argc, char **argv)
     fdset[1].events |= POLLRDHUP;
 #endif
 
-    while (1) {
+    while (true) {
       fdset[1].events &= ~POLLOUT;
-      fdset[1].events |= (ssl_client_want_write(&client)? POLLOUT : 0);
+      fdset[1].events |= (SSLClientWantWrite(&sslClient)? POLLOUT : 0);
 
-      int nready = poll(&fdset[0], 2, -1);
+      const int numReady = WSAPoll(&fdset[0], 2, -1);
 
-      if (nready == 0)
+      if (numReady == 0)
         continue; /* no fd ready */
 
-      int revents = fdset[1].revents;
-      if (revents & POLLIN)
-        if (do_sock_read() == -1)
+      const int readEvents = fdset[1].revents;
+      if (readEvents & POLLIN)
+        if (DoSockRead() == -1)
           break;
-      if (revents & POLLOUT)
-        if (do_sock_write() == -1)
+      if (readEvents & POLLOUT)
+        if (DoSockWrite() == -1)
           break;
-      if (revents & (POLLERR | POLLHUP | POLLNVAL))
+      if (readEvents & (POLLERR | POLLHUP | POLLNVAL))
         break;
 #ifdef POLLRDHUP
       if (revents & POLLRDHUP)
         break;
 #endif
       if (fdset[0].revents & POLLIN)
-        do_stdin_read();
-      if (client.encrypt_len>0)
-        do_encrypt();
+        DoStdinRead();
+      if (sslClient.encrypt_len>0)
+        DoEncrypt();
     }
 
-    close(fdset[1].fd);
-    ssl_client_cleanup(&client);
+    _close(fdset[1].fd);
+    SSLClientCleanup(&sslClient);
   }
 
 #if defined(_WIN32) || defined(_WIN64)
