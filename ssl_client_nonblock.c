@@ -9,21 +9,28 @@
 
 int main(int argc, char **argv)
 {
+#if defined(_WIN32) || defined(_WIN64)
+  WSADATA wsaData;
+  WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+
   /* --- CONFIGURE PEER SOCKET --- */
 
   // port name, optionally take from args
-  int port = argc>1? atoi(argv[1]):443;
+  int port = argc > 1 ? atoi(argv[1]) : 55555;
 
   // host IP address. Attention! This must be a numeric address, not a server
   // host name, because this example code does not perform address lookup.
-  char* host_ip = "2600:9000:225d:600:14:c251:2440:93a1";
+//  char* host_ip = "2600:9000:225d:600:14:c251:2440:93a1";
+  char* host_ip = "127.0.0.1";
 
   // provide the hostname if this SSL client needs to use SNI to tell the server
   // what certificate to use
   const char * host_name = "api.huobi.pro";
 
   // socket family, AF_INET (ipv4) or AF_INET6 (ipv6), must match host_ip above
-  int ip_family = AF_INET6;
+//  int ip_family = AF_INET6;
+  int ip_family = AF_INET;
 
   /* Example for localhost connection
      int port = argc>1? atoi(argv[1]):55555;
@@ -125,6 +132,11 @@ int main(int argc, char **argv)
   print_ssl_state();
   print_ssl_error();
   ssl_client_cleanup(&client);
+
+#if defined(_WIN32) || defined(_WIN64)
+  WSACleanup();
+#endif
+
 
   return 0;
 }

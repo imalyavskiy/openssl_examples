@@ -10,6 +10,11 @@ it under the terms of the MIT license. See LICENSE for details.
 
 int main(int argc, char **argv)
 {
+#if defined(_WIN32) || defined(_WIN64)
+  WSADATA wsaData;
+  WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+
   char str[INET_ADDRSTRLEN];
   int port = (argc>1)? atoi(argv[1]):55555;
 
@@ -98,6 +103,11 @@ int main(int argc, char **argv)
     close(fdset[1].fd);
     ssl_client_cleanup(&client);
   }
+
+#if defined(_WIN32) || defined(_WIN64)
+  WSACleanup();
+#endif
+
 
   return 0;
 }

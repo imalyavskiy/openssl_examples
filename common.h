@@ -10,13 +10,23 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <WinSock2.h>
+#include <Ws2ipdef.h>
+#include <WS2tcpip.h>
+int poll(LPWSAPOLLFD fdArray, ULONG fds, INT timeout) {return WSAPoll(fdArray, fds, timeout);}
+#define STDIN_FILENO 0
+typedef size_t ssize_t;
+#else
 #include <arpa/inet.h>
 #include <poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <string.h>
 
 /* Global SSL context */
