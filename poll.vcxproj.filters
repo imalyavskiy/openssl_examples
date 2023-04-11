@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ssl_client_nonblock.cpp">
+    <ClCompile Include="poll.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
