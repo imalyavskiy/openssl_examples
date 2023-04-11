@@ -5,39 +5,37 @@ ssl_examples is free software; you can redistribute it and/or modify
 it under the terms of the MIT license. See LICENSE for details.
 */
 
-#include "common.h"
-
+#include "SSLClient.h"
+#include "WSAInitGuard.h"
 
 int main(int argc, char **argv)
 {
-#if defined(_WIN32) || defined(_WIN64)
-  WSADATA wsaData;
-  WSAStartup(MAKEWORD(2, 2), &wsaData);
-#endif
+  wsa::guard wsaInitGuard;
 
-  char str[INET_ADDRSTRLEN];
-  const int port = (argc>1)? atoi(argv[1]):55555;
+  const cmn::Config config = cmn::Configure(argc, argv);
 
-  const int servfd = socket(AF_INET, SOCK_STREAM, 0);
+  char str[INET_ADDRSTRLEN] = {0};
+
+  const int servfd = socket(config.ipFamily, SOCK_STREAM, 0);
   if (servfd < 0)
-    Die("socket()");
+    cmn::Die("socket()");
 
-  const char enable = 1;
+  constexpr char enable = 1;
   if (setsockopt(servfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
-    Die("setsockopt(SO_REUSEADDR)");
+    cmn::Die("setsockopt(SO_REUSEADDR)");
 
   /* Specify socket address */
   sockaddr_in servaddr = {0};
   memset(&servaddr, 0, sizeof(servaddr));
-  servaddr.sin_family = AF_INET;
+  servaddr.sin_family = config.ipFamily;
   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  servaddr.sin_port = htons(port);
+  servaddr.sin_port = htons(config.port);
 
-  if (bind(servfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-    Die("bind()");
+  if (bind(servfd, reinterpret_cast<sockaddr*>(&servaddr), sizeof(servaddr)) < 0)
+    cmn::Die("bind()");
 
   if (listen(servfd, 128) < 0)
-    Die("listen()");
+    cmn::Die("listen()");
 
   sockaddr_in peerAddr = { 0 };
   socklen_t peerAddr_len = sizeof(peerAddr);
@@ -46,65 +44,60 @@ int main(int argc, char **argv)
   fdset[0].fd = STDIN_FILENO;
   fdset[0].events = POLLIN;
 
-  SSLInit("server.crt", "server.key"); // see README to create these files
+  cmn::SSLContext::init("server.crt", "server.key"); // see README to create these files
 
-  while (true) {
-    printf("waiting for next connection on port %d\n", port);
+  while (true) 
+  {
+    printf("waiting for next connection on port %d\n", config.port);
 
-    int clientfd = accept(servfd, reinterpret_cast<sockaddr*>(&peerAddr), &peerAddr_len);
-    if (clientfd < 0)
-      Die("accept()");
+    SOCKET clientSocket = ::accept(servfd, reinterpret_cast<sockaddr*>(&peerAddr), &peerAddr_len);
+    if (clientSocket < 0)
+      cmn::Die("accept()");
 
-    SSLClientInit(&sslClient, clientfd, SSLMODE_SERVER);
+    ssl::client sslClient(clientSocket, ssl::client::mode::server);
 
     inet_ntop(peerAddr.sin_family, &peerAddr.sin_addr, str, INET_ADDRSTRLEN);
     printf("new connection from %s:%d\n", str, ntohs(peerAddr.sin_port));
 
-    fdset[1].fd = clientfd;
+    fdset[1].fd = clientSocket;
+    fdset[1].events = POLLERR | POLLHUP | POLLNVAL | POLLIN;
 
     /* event loop */
-
-    fdset[1].events = POLLERR | POLLHUP | POLLNVAL | POLLIN;
-#ifdef POLLRDHUP
-    fdset[1].events |= POLLRDHUP;
-#endif
-
-    while (true) {
+    while (true) 
+    {
       fdset[1].events &= ~POLLOUT;
-      fdset[1].events |= (SSLClientWantWrite(&sslClient)? POLLOUT : 0);
+      fdset[1].events |= sslClient.wannaWrite() ? POLLOUT : 0;
 
-      const int numReady = WSAPoll(&fdset[0], 2, -1);
+      const int numReady = WSAPoll(fdset, 2, -1);
 
       if (numReady == 0)
-        continue; /* no fd ready */
+        continue; /* no descriptors ready */
 
       const int readEvents = fdset[1].revents;
       if (readEvents & POLLIN)
-        if (DoSockRead() == -1)
+      {
+        if (sslClient.doSockRead() == -1)
           break;
+      }
+
       if (readEvents & POLLOUT)
-        if (DoSockWrite() == -1)
+      {
+        if (sslClient.doSockWrite() == -1)
           break;
+      }
+
       if (readEvents & (POLLERR | POLLHUP | POLLNVAL))
         break;
-#ifdef POLLRDHUP
-      if (revents & POLLRDHUP)
-        break;
-#endif
+
       if (fdset[0].revents & POLLIN)
-        DoStdinRead();
-      if (sslClient.encrypt_len>0)
-        DoEncrypt();
+        sslClient.doStdInRead();
+
+      if (sslClient.doHaveDataToEncrypt())
+        sslClient.doEncrypt();
     }
 
     _close(fdset[1].fd);
-    SSLClientCleanup(&sslClient);
   }
-
-#if defined(_WIN32) || defined(_WIN64)
-  WSACleanup();
-#endif
-
 
   return 0;
 }

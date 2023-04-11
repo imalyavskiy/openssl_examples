@@ -4,104 +4,83 @@
   ssl_examples is free software; you can redistribute it and/or modify
   it under the terms of the MIT license. See LICENSE for details.
 */
-#include "common.h"
+
+#include "WSAInitGuard.h"
+#include "SSLClient.h"
 
 int main(int argc, char **argv)
 {
-  WSADATA wsaData;
-  if(0 != WSAStartup(MAKEWORD(2, 2), &wsaData))
-    Die("WSAStartup");
+  wsa::guard wsaGuard;
 
-  /* --- CONFIGURE PEER SOCKET --- */
+  const cmn::Config config = cmn::Configure(argc, argv);
 
-  // port name, optionally take from args
-  int port = argc > 1 ? atoi(argv[1]) : 55555;
-
-  // host IP address. Attention! This must be a numeric address, not a server
-  // host name, because this example code does not perform address lookup.
-  //  char* host_ip = "2600:9000:225d:600:14:c251:2440:93a1";
-  const char hostIP[] = "127.0.0.1";
-
-  // provide the hostname if this SSL client needs to use SNI to tell the server
-  // what certificate to use
-  const char hostName[] = "api.huobi.pro";
-
-  // socket family, AF_INET (ipv4) or AF_INET6 (ipv6), must match host_ip above
-  const int ipFamily = AF_INET;
-
-  /* Example for localhost connection
-     int port = argc>1? atoi(argv[1]):55555;
-     const char* host_ip = "127.0.0.1";
-     const char * host_name = NULL;
-     int ip_family = AF_INET;
-  */
-
-
-  /* --- CONFIGURATION ENDS --- */
-
-  const int sockfd = socket(ipFamily, SOCK_STREAM, 0);
-
-  if (sockfd < 0)
-    Die("socket()");
+  SOCKET serverSocket = ::socket(config.ipFamily, SOCK_STREAM, 0);
+  if (serverSocket < 0)
+    cmn::Die("socket()");
 
   /* Specify socket address */
   sockaddr_in addr = {0};
-  addr.sin_family = ipFamily;
-  addr.sin_port = htons(port);
+  addr.sin_family = config.ipFamily;
+  addr.sin_port = htons(config.port);
 
-  if (inet_pton(ipFamily, hostIP, &(addr.sin_addr)) <= 0)
-    Die("inet_pton()");
+  if (inet_pton(config.ipFamily, config.hostIP.c_str(), &(addr.sin_addr)) <= 0)
+    cmn::Die("inet_pton()");
 
-  if (connect(sockfd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
-    Die("connect()");
+  if (connect(serverSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
+    cmn::Die("connect()");
 
   printf("socket connected\n");
 
   pollfd fdset[2] = { 0 };
   fdset[0].fd = STDIN_FILENO;
   fdset[0].events = POLLIN;
-  fdset[1].fd = sockfd;
+  fdset[1].fd = serverSocket;
   fdset[1].events = POLLERR | POLLHUP | POLLNVAL | POLLIN;
 
-  SSLInit(nullptr,nullptr);
-  SSLClientInit(&sslClient, sockfd, SSLMODE_CLIENT);
+  cmn::SSLContext::init();
+  ssl::client sslClient(serverSocket, ssl::client::mode::client, config.hostName);
 
-  if (hostName)
-    SSL_set_tlsext_host_name(sslClient.ssl, hostName); // TLS SNI
-
-  DoSSLHandshake();
+  sslClient.doSSLHandshake();
 
   /* event loop */
-  while (true) {
+  while (true) 
+  {
     fdset[1].events &= ~POLLOUT;
-    fdset[1].events |= SSLClientWantWrite(&sslClient)? POLLOUT : 0;
+    fdset[1].events |= sslClient.wannaWrite() ? POLLOUT : 0;
 
-    const int numReady = WSAPoll(&fdset[0], 2, -1);
+    const int numReady = WSAPoll(fdset, 2, -1);
     if (numReady == 0)
-      continue; /* no fd ready */
+      continue; /* no descriptors ready */
 
     const int readEvents = fdset[1].revents;
     if (readEvents & POLLIN)
-      if (DoSockRead() == -1)
+    {
+      if (sslClient.doSockRead() == -1)
         break;
+    }
+
     if (readEvents & POLLOUT)
-      if (DoSockWrite() == -1)
+    {
+      if (sslClient.doSockWrite() == -1)
         break;
+    }
+
     if (readEvents & (POLLERR | POLLHUP | POLLNVAL))
       break;
+
     if (fdset[0].revents & POLLIN)
-      DoStdinRead();
-    if (sslClient.encrypt_len>0)
-      if (DoEncrypt() < 0)
+      sslClient.doStdInRead();
+
+    if (sslClient.doHaveDataToEncrypt())
+    {
+      if (sslClient.doEncrypt() < 0)
         break;
+    }
   }
 
   _close(fdset[1].fd);
-  PrintSSLState();
-  PrintSSLError();
-  SSLClientCleanup(&sslClient);
-
-  WSACleanup();
+  sslClient.printSSLState();
+  cmn::PrintSSLError();
 
   return 0;
 }
