@@ -14,7 +14,7 @@
     <ClCompile Include="ssl_client_nonblock.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="common.vcxproj">
+    <ProjectReference Include="..\common\common.vcxproj">
       <Project>{d7359aa8-795e-42ac-9f79-66601ea5c41c}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -54,13 +54,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)_bin\$(PlatformShortName)\$(Configuration)</OutDir>
     <IntDir>$(SolutionDir)_int\$(PlatformShortName)\$(Configuration)\$(ProjectName)</IntDir>
-    <IncludePath>C:\openssl\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>C:\openssl\include;$(SolutionDir)openssl\common;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>C:\openssl\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)_bin\$(PlatformShortName)\$(Configuration)</OutDir>
     <IntDir>$(SolutionDir)_int\$(PlatformShortName)\$(Configuration)\$(ProjectName)</IntDir>
-    <IncludePath>C:\openssl\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>C:\openssl\include;$(SolutionDir)openssl\common;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>C:\openssl\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
