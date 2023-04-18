@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OpenSSL", "OpenSSL", "{8A9E
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stdin", "sandbox\stdin\stdin.vcxproj", "{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -78,6 +80,14 @@ Global
 		{DDF5C8B9-7880-4E13-BC5F-4F253180A447}.Release|x64.Build.0 = Release|x64
 		{DDF5C8B9-7880-4E13-BC5F-4F253180A447}.Release|x86.ActiveCfg = Release|x64
 		{DDF5C8B9-7880-4E13-BC5F-4F253180A447}.Release|x86.Build.0 = Release|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Debug|x64.ActiveCfg = Debug|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Debug|x64.Build.0 = Debug|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Debug|x86.ActiveCfg = Debug|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Debug|x86.Build.0 = Debug|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Release|x64.ActiveCfg = Release|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Release|x64.Build.0 = Release|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Release|x86.ActiveCfg = Release|x64
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,6 +99,7 @@ Global
 		{57757025-91E4-4359-A1F4-2791D175E4F8} = {73C297FB-978E-4F54-8E80-D1DC3070581C}
 		{D7359AA8-795E-42AC-9F79-66601EA5C41C} = {8A9ECA90-74D3-49C0-9B0E-20EC7CEA9290}
 		{DDF5C8B9-7880-4E13-BC5F-4F253180A447} = {73C297FB-978E-4F54-8E80-D1DC3070581C}
+		{8B728EA2-1295-4C0E-8BD2-7DA50FB36559} = {73C297FB-978E-4F54-8E80-D1DC3070581C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B5F4058F-237F-4A1B-93B6-46C5D7780DB8}
