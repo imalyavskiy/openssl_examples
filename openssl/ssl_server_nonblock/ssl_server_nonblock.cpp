@@ -12,17 +12,17 @@ int main(int argc, char **argv)
 {
   wsa::guard wsaInitGuard;
 
-  const cmn::Config config = cmn::Configure(argc, argv);
+  const cmn::config config = cmn::Configure(argc, argv);
 
   char str[INET_ADDRSTRLEN] = {0};
 
   const int servfd = socket(config.ipFamily, SOCK_STREAM, 0);
   if (servfd < 0)
-    cmn::Die("socket()");
+    cmn::die("socket()");
 
   constexpr char enable = 1;
   if (setsockopt(servfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
-    cmn::Die("setsockopt(SO_REUSEADDR)");
+    cmn::die("setsockopt(SO_REUSEADDR)");
 
   /* Specify socket address */
   sockaddr_in servaddr = {0};
@@ -32,10 +32,10 @@ int main(int argc, char **argv)
   servaddr.sin_port = htons(config.port);
 
   if (bind(servfd, reinterpret_cast<sockaddr*>(&servaddr), sizeof(servaddr)) < 0)
-    cmn::Die("bind()");
+    cmn::die("bind()");
 
   if (listen(servfd, 128) < 0)
-    cmn::Die("listen()");
+    cmn::die("listen()");
 
   sockaddr_in peerAddr = { 0 };
   socklen_t peerAddr_len = sizeof(peerAddr);
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
     SOCKET clientSocket = ::accept(servfd, reinterpret_cast<sockaddr*>(&peerAddr), &peerAddr_len);
     if (clientSocket < 0)
-      cmn::Die("accept()");
+      cmn::die("accept()");
 
     ssl::client sslClient(clientSocket, ssl::client::mode::server);
 

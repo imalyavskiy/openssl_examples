@@ -12,11 +12,11 @@ int main(int argc, char **argv)
 {
   wsa::guard wsaGuard;
 
-  const cmn::Config config = cmn::Configure(argc, argv);
+  const cmn::config config = cmn::Configure(argc, argv);
 
   SOCKET serverSocket = ::socket(config.ipFamily, SOCK_STREAM, 0);
   if (serverSocket < 0)
-    cmn::Die("socket()");
+    cmn::die("socket()");
 
   /* Specify socket address */
   sockaddr_in addr = {0};
@@ -24,10 +24,10 @@ int main(int argc, char **argv)
   addr.sin_port = htons(config.port);
 
   if (inet_pton(config.ipFamily, config.hostIP.c_str(), &(addr.sin_addr)) <= 0)
-    cmn::Die("inet_pton()");
+    cmn::die("inet_pton()");
 
   if (connect(serverSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
-    cmn::Die("connect()");
+    cmn::die("connect()");
 
   printf("socket connected\n");
 

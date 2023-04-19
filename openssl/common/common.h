@@ -12,6 +12,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+
 #include <io.h>
 #include <WinSock2.h>
 #include <Ws2ipdef.h>
@@ -31,7 +33,7 @@ namespace cmn
 {
 void HandleError(const char *file, int lineNo, const char *msg);
 
-void Die(const char *msg);
+void die(const char *msg);
 
 void PrintUnencryptedData(char *buf, size_t len);
 
@@ -55,7 +57,7 @@ private:
 };
 
 // Basic configuration data
-struct Config
+struct config
 {
   // port name
   int port;
@@ -72,6 +74,6 @@ struct Config
   int ipFamily;
 };
 
-Config Configure(int argc, char **argv);
+config Configure(int argc, char **argv);
 }
 #endif // __COMMON_H__

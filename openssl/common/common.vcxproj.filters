@@ -24,6 +24,15 @@
     <ClCompile Include="WSAInitGuard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tcpclient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tcpserver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tcpconnection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -33,6 +42,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WSAInitGuard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tcpclient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tcpserver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tcpconnection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

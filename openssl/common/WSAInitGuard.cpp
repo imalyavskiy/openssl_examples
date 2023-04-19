@@ -7,7 +7,7 @@ namespace wsa
   {
     WSADATA wsaData;
     if(0 != WSAStartup(MAKEWORD(2, 2), &wsaData))
-      cmn::Die("Fatal error: WSAStartup - failed!");
+      cmn::die("Fatal error: WSAStartup - failed!");
   }
 
   guard::~guard()

@@ -7,7 +7,7 @@ namespace cmn
     exit(-1);
   }
 
-  void Die(const char *msg) {
+  void die(const char *msg) {
     perror(msg);
     exit(1);
   }
@@ -32,7 +32,7 @@ namespace cmn
   SSL_CTX* SSLContext::get()
   {
     if(nullptr == sslContext_)
-      Die("No SSL Context");
+      die("No SSL Context");
 
     return sslContext_;
   }
@@ -51,7 +51,7 @@ namespace cmn
     /* create the SSL server context */
     sslContext_ = SSL_CTX_new(TLS_method());
     if (!sslContext_)
-      Die("SSL_CTX_new()");
+      die("SSL_CTX_new()");
 
     /* Load certificate and private key files, and check consistency */
     if (false == certificateFile.empty() && false == keyFile.empty()) {
@@ -72,12 +72,12 @@ namespace cmn
     SSL_CTX_set_options(sslContext_, SSL_OP_ALL|SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
   }
 
-  Config Configure(int argc, char** argv)
+  config Configure(int argc, char** argv)
   {
-    return Config{
+    return config{
       argc > 1 ? atoi(argv[1]) : 55555,
       "127.0.0.1",
-      "api.huobi.pro",
+      "localhost",//"api.huobi.pro",
       AF_INET,
     };
   }
